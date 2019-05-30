@@ -1,0 +1,300 @@
+// Programmer: Teresa Ramirez- Final -Programming in C
+//In this assignment we will create a program that will assign
+//seat for pasengers in fast flight airlines.
+// We will be given passengers amd we will have to seat them
+//They are separated by whether they want a smoking or non-smoking seat.
+//if there are no seats aviable in the section that they want they will
+//put on to a waiting list.
+//Then if the seat becomes availble the passenger will be placed in the seat
+//closest to the close to the smoking or non-smoking area they requested
+//If the seats are all takes the passengers name will be put on the next flight.
+
+#include "stdafx.h"
+#include <iostream>
+#include <fstream>
+using namespace System;
+
+// Structure defintion
+struct passenger
+{
+	char firstName[100];
+	char lastName[100];
+	char smoking[1];
+	int row;
+	int column;
+};
+
+void report(int counter, int wCount, struct passenger pArray[10][3], struct passenger *wArray);
+
+int main()
+{
+    system("color f0");
+
+	char input;
+	int seats[10][3];
+	// populate seats[][]
+	for(int i=0;i<10;i++)
+	{
+		for(int j=0;j<3;j++){
+			seats[i][j] = 0;
+		}
+	}
+
+	// Flight array of struct
+	struct passenger pArray[10][3];
+	// Waitlist array of struct
+	struct passenger wArray[40];
+
+	//Open file for reading
+	FILE *dataFile;
+	// My .txt file has a single space at the beginning. Otherwise it skips the first name entirely
+
+	// Check if file opened correctly
+	if((dataFile = fopen("data.txt", "r")) == NULL)
+	{
+		printf("Error: File could not be opened.");
+	}
+
+	// temporary structure for input
+	struct passenger temp = {"","","",0,0};
+	// counter for overall number of entries
+	int counter = 0;
+	// passengers counter
+	int pCount = 0;
+	// waitlist counter
+	int wCount = 0;
+	// ch for reading file until EOF
+	int ch;
+
+	// Store data
+    while((ch = getc(dataFile)) != EOF) // reads file until EOF
+    {
+		// instance of temporary struct for input
+		fscanf(dataFile,"%s %s %s %d %d",temp.lastName,temp.firstName,temp.smoking,&temp.row,&temp.column);
+		// If requested seat is availible, update "parallel" 2D array & flight array
+		if(seats[temp.row-1][temp.column-1] == 0)
+		{
+			seats[temp.row-1][temp.column-1] = 1;
+			pArray[temp.row-1][temp.column-1] = temp;
+			pCount++;
+		}
+		// If seat is taken
+		else{
+			// boolean to control waitlist
+			// bool placed will only be true if the passenger is added to the flight array
+			// if it is never true, then the passenger will automatically be added to the waitlist
+			bool placed = false;
+			// If passenger has a non smoking preference
+			if(strcmp(temp.smoking,"N")==0)
+			{
+				
+				for(int row=0;row<7;row++)
+				{
+					// Columns 1-3
+					for(int col=0;col<3;col++)
+					{
+						// Search for empty seat from front of plane to back
+						if(seats[row][col] == 0)
+						{
+							// Update "parallel" array (empty/full)
+							seats[row][col] = 1;
+							// Add passenger to flight array
+							pArray[row][col] = temp;
+							// Break loops
+							row=7;
+							col=3;
+							// Ensures passenger won't be added to the waitlist at the end
+							placed = true;
+							// Counter for number of passengers updated
+							pCount++;
+						} // end if
+					} // end for
+				} // end for
+			} // end if "N"
+			else // if smoking preference is "S"
+			{
+				// Rows 8-10
+				for(int row=7;row<10;row++)
+				{
+					// Columns 1-3
+					for(int col=0;col<3;col++)
+					{
+						// Search for empty seat from row 8 - 10
+						if(seats[row][col] == 0)
+						{
+							// Update "parallel" array (empty/full)
+							seats[row][col] = 1;
+							// Add passenger to flight array
+							pArray[row][col] = temp;
+							// Break loops
+							row=10;
+							col=3;
+							// Ensures passenger won't be added to the waitlist at the end
+							placed = true;
+							// Counter for number of passengers updated
+							pCount++;
+						}
+					}
+				}
+			}
+			// if passenger was not added to flight array
+			if(!placed)
+			{
+				// Add passenger to waitlist
+				wArray[wCount] = temp;
+				// Update waitlist counter
+				wCount++;
+			}
+		}
+		// Increase overall user counter
+		counter++;	
+    }
+
+	// Close file
+    fclose(dataFile);
+		printf("*************************************************\n");
+		printf("*\t\tFAST FLIGHT AIRLINES\t\t*\n");
+		printf("*************************************************\n\n");
+				report(counter, wCount, pArray, wArray);
+				printf("*************************************************\n");
+				printf("*\t\tFAST FLIGHT AIRLINES\t\t*\n");
+				printf("*************************************************\n");
+				// Append new passenger
+				// Prompt for use to enter last name
+				printf("Please enter  the passenger's last name:");
+				scanf("%s",temp.lastName);
+				//Prompt for user to enter first name
+				printf("Please enter the passenger's first name:");
+				scanf("%s",temp.firstName);
+				// Smoking preference
+				printf("Please enter if the passenger would prefer to have a non-smoking or smoking seat. Enter S for smoking or N for non smoking. [S/N]: ");
+				scanf("%s",temp.smoking);
+				// Row
+				printf("Please enter what row the passenger will sit in.");
+				scanf("%d",&temp.row);
+				// Column
+				printf("Please enter what column the passenger will sit in.");
+				scanf("%d",&temp.column);
+
+				// If seat is availible
+				if(seats[temp.row-1][temp.column-1] == 0)
+				{
+					seats[temp.row-1][temp.column-1] = 1;
+					pArray[temp.row-1][temp.column-1] = temp;
+					pCount++;
+				}
+				// If seat is taken
+				else{
+					bool placed = false;
+					// Non smoking
+					if(strcmp(temp.smoking,"N")==0)
+					{
+						// Rows 1-7
+						for(int row=0;row<7;row++)
+						{
+							// Columns 1-3
+							for(int col=0;col<3;col++)
+							{
+								// Flight from front to back
+								if(seats[row][col] == 0)
+								{
+									// Update flight away and break loops
+									seats[row][col] = 1;
+									pArray[row][col] = temp;
+									row=7;
+									col=3;
+									placed = true;
+									pCount++;
+								}
+							}
+						}
+					}
+					else // if Smoking preference
+					{
+						// Rows 8-10
+						for(int row=7;row<10;row++)
+						{
+							// Columns 1-3
+							for(int col=0;col<3;col++)
+							{
+								// if seat is empty
+								if(seats[row][col] == 0)
+								{
+									// Update flight array and break loops
+									seats[row][col] = 1;
+									pArray[row][col] = temp;
+									row=10;
+									col=3;
+									placed = true;
+									pCount++;
+								}
+							}
+						}
+					}
+					// If no seats are availible
+					if(placed == false)
+					{
+					wArray[wCount] = temp;
+					wCount++;
+					}
+				}
+		
+		
+		report(counter, wCount, pArray, wArray);		
+		
+	system("pause");
+    return 0;
+}
+
+//This function prints out the report
+void report(int counter, int wCount, struct passenger pArray[10][3], struct passenger *wArray)
+{
+	printf("*************************************************\n");
+	printf("*\t\tNON SMOKING SECTION\t\t*\n");
+	printf("*************************************************\n");
+	for(int row=0;row<7;row++)
+	{
+		// Columns 1-3
+		for(int col=0;col<3;col++)
+		{
+			// Print evenly when total name longer than 14 char
+			if((strlen(pArray[row][col].firstName)+strlen(pArray[row][col].lastName))>14)
+			printf("%s %s\t",pArray[row][col].lastName,pArray[row][col].firstName);
+			else
+			printf("%s %s\t",pArray[row][col].lastName,pArray[row][col].firstName);
+		}
+		printf("\n");
+	}
+
+	printf("\n*************************************************\n");
+	printf("*\t\tSMOKING SECTION\t\t\t*\n");
+	printf("*************************************************\n");
+
+	// Rows 8-10
+	for(int row=7;row<10;row++)
+	{
+		// columns 1-3
+		for(int col=0;col<3;col++)
+		{
+			// Print evenly when total name longer than 14 chars
+			if((strlen(pArray[row][col].firstName)+strlen(pArray[row][col].lastName))>14)
+			printf("%s %s\t",pArray[row][col].lastName,pArray[row][col].firstName);
+			else
+			printf("%s %s\t",pArray[row][col].lastName,pArray[row][col].firstName);
+		}
+		printf("\n");
+	}
+
+	printf("\n*************************************************\n");
+	printf("*\t\tWAITLIST\t\t\t*\n");
+	printf("*************************************************\n");
+	// Cycle through waitlist array from 0 to wCount (waitlist counter)
+	for(int a=0;a<wCount;a++)
+	{
+		
+		if((strlen(wArray[a].firstName)+strlen(wArray[a].lastName))>14)
+		printf("%d.\t%s %s\t%s\t%d\t%d\n",a+1,wArray[a].lastName,wArray[a].firstName,wArray[a].smoking,wArray[a].row, wArray[a].column);
+		else
+		printf("%d.\t%s %s\t\t%s\t%d\t%d\n",a+1,wArray[a].lastName,wArray[a].firstName,wArray[a].smoking,wArray[a].row, wArray[a].column);
+	}
+}
